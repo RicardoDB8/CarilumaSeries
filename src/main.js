@@ -8,11 +8,11 @@ const api = axios.create({
   }
 });
 
-async function getTrendingMoviesPreview() {
-  const { data } = await api('trending/movie/day');
-  const movies = data.results;
+//Utils
 
-  trendingMoviesPreviewList.innerHTML = "";
+function createMovies(movies, container) {
+  container.innerHTML = '';
+
   movies.forEach(movie => {
     const movieContainer = document.createElement('div');
     movieContainer.classList.add('movie-container');
@@ -26,15 +26,12 @@ async function getTrendingMoviesPreview() {
     );
 
     movieContainer.appendChild(movieImg);
-    trendingMoviesPreviewList.appendChild(movieContainer);
+    container.appendChild(movieContainer);
   });
 }
 
-async function getCategegoriesPreview() {
-  const { data } = await api('genre/movie/list');
-  const categories = data.genres;
-
-  categoriesPreviewList.innerHTML = "";
+function createCategories(categories, container) {
+  container.innerHTML = "";
 
   categories.forEach(category => {  
     const categoryContainer = document.createElement('div');
@@ -50,8 +47,24 @@ async function getCategegoriesPreview() {
 
     categoryTitle.appendChild(categoryTitleText);
     categoryContainer.appendChild(categoryTitle);
-    categoriesPreviewList.appendChild(categoryContainer);
+    container.appendChild(categoryContainer);
   });
+}
+
+//Lamados a la API
+
+async function getTrendingMoviesPreview() {
+  const { data } = await api('trending/movie/day');
+  const movies = data.results;
+
+  createMovies(movies, trendingMoviesPreviewList)
+}
+
+async function getCategegoriesPreview() {
+  const { data } = await api('genre/movie/list');
+  const categories = data.genres;
+
+  createCategories(categories, categoriesPreviewList);
 }
 
 async function getMoviesByCategory(id) {
@@ -62,21 +75,6 @@ async function getMoviesByCategory(id) {
   });
   const movies = data.results;
 
-  genericSection.innerHTML = "";
-  movies.forEach(movie => {
-    const movieContainer = document.createElement('div');
-    movieContainer.classList.add('movie-container');
-
-    const movieImg = document.createElement('img');
-    movieImg.classList.add('movie-img');
-    movieImg.setAttribute('alt', movie.title);
-    movieImg.setAttribute(
-      'src',
-      'https://image.tmdb.org/t/p/w300' + movie.poster_path,
-    );
-
-    movieContainer.appendChild(movieImg);
-    genericSection.appendChild(movieContainer);
-  });
+  createMovies(movies, genericSection);
 }
 
