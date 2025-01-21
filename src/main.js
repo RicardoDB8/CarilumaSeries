@@ -124,15 +124,22 @@ async function getTrendingMovies() {
 
   createMovies(movies, genericSection, { lazyLoad: true, clean: true});
 
-  const btnLoadMore = document.createElement('button')
+ /*  const btnLoadMore = document.createElement('button')
   btnLoadMore.innerText = "Cargar más";
   btnLoadMore.addEventListener('click', getPaginatedTrendingMovies);
-  genericSection.appendChild(btnLoadMore);
+  genericSection.appendChild(btnLoadMore); */
 }
 
-let page = 1;
-
 async function getPaginatedTrendingMovies() {
+ const { 
+  scrollTop, 
+  scrollHeight, 
+  clientHeight 
+} = document.documentElement;
+
+const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
+
+if (scrollIsBottom) {
   page++;
   const { data } = await api('trending/movie/day', {
     params: {
@@ -146,10 +153,12 @@ async function getPaginatedTrendingMovies() {
     genericSection, 
     { lazyLoad: true, clean: false},
   );
-  const btnLoadMore = document.createElement('button')
+}
+
+  /* const btnLoadMore = document.createElement('button')
   btnLoadMore.innerText = "Cargar más";
   btnLoadMore.addEventListener('click', getPaginatedTrendingMovies);
-  genericSection.appendChild(btnLoadMore);
+  genericSection.appendChild(btnLoadMore); */
 }
 
 async function getMovieById(id) {
