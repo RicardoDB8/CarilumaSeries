@@ -236,3 +236,39 @@ function getLikedSeries() {
   createSeries(seriesArray, likedSeriesListArticle, { lazyLoad: true, clean: true });
 }
 // versión nueva
+async function getTrendingMovies() {
+  const { data } = await api('trending/tv/day', {
+    params: {
+      page,
+    },
+  });
+  const series = data.results;
+  maxPage = data.total_pages;
+
+  createSeries(series, genericSection, { lazyLoad: true });
+}
+
+function getPaginatedTrendingMovies() {
+  return async function () {
+    const {
+      scrollTop,
+      scrollHeight,
+      clientHeight
+    } = document.documentElement;
+
+    const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
+    const pageIsNotMax = page < maxPage;
+
+    if (scrollIsBottom && pageIsNotMax) {
+      page++;
+      const { data } = await api('trending/tv/day', {
+        params: {
+          page,
+        },
+      });
+      const series = data.results;
+
+      createSeries(series, genericSection, { lazyLoad: true, clean: false });
+    }
+  }
+}

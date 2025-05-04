@@ -155,6 +155,12 @@ function trendsPage() {
 
   headerCategoryTitle.innerHTML = 'Tendencias';
 
-  getTrendingSeriesPreview();
-  infiniteScroll = null; // Reemplazalo si tenés una función paginada
+  // 🔄 Reiniciar paginación
+  page = 1;
+
+  // ✅ Llamar a la API para obtener los primeros resultados
+  getTrendingMovies();
+
+  // ✅ Asignar correctamente la función de scroll
+  infiniteScroll = getPaginatedTrendingMovies(); // PARÉNTESIS para ejecutar la función y obtener el handler
 }
