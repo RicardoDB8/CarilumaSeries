@@ -10,101 +10,89 @@ const api = axios.create({
   },
 });
 
-function likedMoviesList() {
-  const item = JSON.parse(localStorage.getItem('liked_movies'));
-  let movies;
-
-  if (item) {
-    movies = item;
-  } else {
-    movies = {};
-  }
-  
-  return movies;
+function likedSeriesList() {
+  const item = JSON.parse(localStorage.getItem('liked_series'));
+  return item ? item : {};
 }
 
-function likeMovie(movie) {
-  // movie.id
-  const likedMovies = likedMoviesList();
+function likeSeries(series) {
+  const likedSeries = likedSeriesList();
 
-  console.log(likedMovies)
-  
-  if (likedMovies[movie.id]) {
-    likedMovies[movie.id] = undefined;
+  if (likedSeries[series.id]) {
+    likedSeries[series.id] = undefined;
   } else {
-    likedMovies[movie.id] = movie;
+    likedSeries[series.id] = series;
   }
 
-  localStorage.setItem('liked_movies', JSON.stringify(likedMovies));
+  localStorage.setItem('liked_series', JSON.stringify(likedSeries));
 }
-
 
 // Utils
 
 const lazyLoader = new IntersectionObserver((entries) => {
   entries.forEach((entry) => {
     if (entry.isIntersecting) {
-      const url = entry.target.getAttribute('data-img')
+      const url = entry.target.getAttribute('data-img');
       entry.target.setAttribute('src', url);
     }
   });
 });
 
-function createMovies(
-  movies,
+function createSeries(
+  series,
   container,
   {
     lazyLoad = false,
     clean = true,
-  } = {},
+  } = {}
 ) {
   if (clean) {
     container.innerHTML = '';
   }
 
-  movies.forEach(movie => {
-    const movieContainer = document.createElement('div');
-    movieContainer.classList.add('movie-container');
+  series.forEach(serie => {
+    const serieContainer = document.createElement('div');
+    serieContainer.classList.add('movie-container');
 
-    const movieImg = document.createElement('img');
-    movieImg.classList.add('movie-img');
-    movieImg.setAttribute('alt', movie.title);
-    movieImg.setAttribute(
+    const serieImg = document.createElement('img');
+    serieImg.classList.add('movie-img');
+    serieImg.setAttribute('alt', serie.name);
+    serieImg.setAttribute(
       lazyLoad ? 'data-img' : 'src',
-      'https://image.tmdb.org/t/p/w300' + movie.poster_path,
+      'https://image.tmdb.org/t/p/w300' + serie.poster_path,
     );
-    movieImg.addEventListener('click', () => {
-      location.hash = '#movie=' + movie.id;
+    serieImg.addEventListener('click', () => {
+      location.hash = '#serie=' + serie.id;
     });
-    movieImg.addEventListener('error', () => {
-      movieImg.setAttribute(
+    serieImg.addEventListener('error', () => {
+      serieImg.setAttribute(
         'src',
         'https://static.platzi.com/static/images/error/img404.png',
       );
     });
 
-    const movieBtn = document.createElement('button');
-    movieBtn.classList.add('movie-btn');
-    likedMoviesList()[movie.id] && movieBtn.classList.add('movie-btn--liked');
-    movieBtn.addEventListener('click', () => {
-      movieBtn.classList.toggle('movie-btn--liked');
-      likeMovie(movie);
+    const serieBtn = document.createElement('button');
+    serieBtn.classList.add('movie-btn');
+    likedSeriesList()[serie.id] && serieBtn.classList.add('movie-btn--liked');
+    serieBtn.addEventListener('click', () => {
+      serieBtn.classList.toggle('movie-btn--liked');
+      likeSeries(serie);
     });
 
     if (lazyLoad) {
-      lazyLoader.observe(movieImg);
+      lazyLoader.observe(serieImg);
     }
 
-    movieContainer.appendChild(movieImg);
-    movieContainer.appendChild(movieBtn);
-    container.appendChild(movieContainer);
+    serieContainer.appendChild(serieImg);
+    serieContainer.appendChild(serieBtn);
+    container.appendChild(serieContainer);
   });
 }
 
 function createCategories(categories, container) {
-  container.innerHTML = "";
+  container.innerHTML = '';
 
-  categories.forEach(category => {  
+  categories.forEach(category => {
     const categoryContainer = document.createElement('div');
     categoryContainer.classList.add('category-container');
 
@@ -112,7 +100,7 @@ function createCategories(categories, container) {
     categoryTitle.classList.add('category-title');
     categoryTitle.setAttribute('id', 'id' + category.id);
     categoryTitle.addEventListener('click', () => {
-      location.hash = `#category=${category.id}-${category.name}`;
+      location.hash = `#tv-category=${category.id}-${category.name}`;
     });
     const categoryTitleText = document.createTextNode(category.name);
 
@@ -122,178 +110,128 @@ function createCategories(categories, container) {
   });
 }
 
-// Llamados a la API
+// API Calls
 
-async function getTrendingMoviesPreview() {
-  const { data } = await api('trending/movie/day');
-  const movies = data.results;
-  console.log(movies)
+let page = 1;
+let maxPage;
 
-  createMovies(movies, trendingMoviesPreviewList, true);
+async function getTrendingSeriesPreview() {
+  const { data } = await api('trending/tv/day');
+  const series = data.results;
+
+  createSeries(series, trendingSeriesPreviewList, { lazyLoad: true });
 }
 
-async function getCategegoriesPreview() {
-  const { data } = await api('genre/movie/list');
+async function getSeriesCategoriesPreview() {
+  const { data } = await api('genre/tv/list');
   const categories = data.genres;
 
   createCategories(categories, categoriesPreviewList);
 }
 
-async function getMoviesByCategory(id) {
-  const { data } = await api('discover/movie', {
+async function getSeriesByCategory(id) {
+  const { data } = await api('discover/tv', {
     params: {
       with_genres: id,
     },
   });
-  const movies = data.results;
+  const series = data.results;
   maxPage = data.total_pages;
 
-  createMovies(movies, genericSection, { lazyLoad: true });
+  createSeries(series, genericSection, { lazyLoad: true });
 }
 
-function getPaginatedMoviesByCategory(id) {
+function getPaginatedSeriesByCategory(id) {
   return async function () {
     const {
       scrollTop,
       scrollHeight,
       clientHeight
     } = document.documentElement;
-    
+
     const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
     const pageIsNotMax = page < maxPage;
-  
+
     if (scrollIsBottom && pageIsNotMax) {
       page++;
-      const { data } = await api('discover/movie', {
+      const { data } = await api('discover/tv', {
         params: {
           with_genres: id,
           page,
         },
       });
-      const movies = data.results;
-    
-      createMovies(
-        movies,
-        genericSection,
-        { lazyLoad: true, clean: false },
-      );
+      const series = data.results;
+
+      createSeries(series, genericSection, { lazyLoad: true, clean: false });
     }
   }
 }
 
-async function getMoviesBySearch(query) {
-  const { data } = await api('search/movie', {
-    params: {
-      query,
-    },
+async function getSeriesBySearch(query) {
+  const { data } = await api('search/tv', {
+    params: { query },
   });
-  const movies = data.results;
+  const series = data.results;
   maxPage = data.total_pages;
-  console.log(maxPage)
 
-  createMovies(movies, genericSection);
+  createSeries(series, genericSection);
 }
 
-function getPaginatedMoviesBySearch(query) {
+function getPaginatedSeriesBySearch(query) {
   return async function () {
     const {
       scrollTop,
       scrollHeight,
       clientHeight
     } = document.documentElement;
-    
+
     const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
     const pageIsNotMax = page < maxPage;
-  
+
     if (scrollIsBottom && pageIsNotMax) {
       page++;
-      const { data } = await api('search/movie', {
-        params: {
-          query,
-          page,
-        },
+      const { data } = await api('search/tv', {
+        params: { query, page },
       });
-      const movies = data.results;
-    
-      createMovies(
-        movies,
-        genericSection,
-        { lazyLoad: true, clean: false },
-      );
+      const series = data.results;
+
+      createSeries(series, genericSection, { lazyLoad: true, clean: false });
     }
   }
 }
 
-async function getTrendingMovies() {
-  const { data } = await api('trending/movie/day');
-  const movies = data.results;
-  maxPage = data.total_pages;
+async function getSeriesById(id) {
+  const { data: serie } = await api('tv/' + id);
 
-  createMovies(movies, genericSection, { lazyLoad: true, clean: true });
-}
-
-async function getPaginatedTrendingMovies() {
-  const {
-    scrollTop,
-    scrollHeight,
-    clientHeight
-  } = document.documentElement;
-  
-  const scrollIsBottom = (scrollTop + clientHeight) >= (scrollHeight - 15);
-  const pageIsNotMax = page < maxPage;
-
-  if (scrollIsBottom && pageIsNotMax) {
-    page++;
-    const { data } = await api('trending/movie/day', {
-      params: {
-        page,
-      },
-    });
-    const movies = data.results;
-
-    createMovies(
-      movies,
-      genericSection,
-      { lazyLoad: true, clean: false },
-    );
-  }
-}
-
-async function getMovieById(id) {
-  const { data: movie } = await api('movie/' + id);
-
-  const movieImgUrl = 'https://image.tmdb.org/t/p/w500' + movie.poster_path;
-  console.log(movieImgUrl)
+  const serieImgUrl = 'https://image.tmdb.org/t/p/w500' + serie.poster_path;
   headerSection.style.background = `
     linear-gradient(
       180deg,
       rgba(0, 0, 0, 0.35) 19.27%,
       rgba(0, 0, 0, 0) 29.17%
     ),
-    url(${movieImgUrl})
+    url(${serieImgUrl})
   `;
-  
-  movieDetailTitle.textContent = movie.title;
-  movieDetailDescription.textContent = movie.overview;
-  movieDetailScore.textContent = movie.vote_average;
 
-  createCategories(movie.genres, movieDetailCategoriesList);
+  movieDetailTitle.textContent = serie.name;
+  movieDetailDescription.textContent = serie.overview;
+  movieDetailScore.textContent = serie.vote_average;
 
-  getRelatedMoviesId(id);
+  createCategories(serie.genres, movieDetailCategoriesList);
+
+  getRelatedSeriesId(id);
 }
 
-async function getRelatedMoviesId(id) {
-  const { data } = await api(`movie/${id}/recommendations`);
-  const relatedMovies = data.results;
+async function getRelatedSeriesId(id) {
+  const { data } = await api(`tv/${id}/recommendations`);
+  const relatedSeries = data.results;
 
-  createMovies(relatedMovies, relatedMoviesContainer);
+  createSeries(relatedSeries, relatedMoviesContainer);
 }
 
-function getLikedMovies() {
-  const likedMovies = likedMoviesList();
-  const moviesArray = Object.values(likedMovies);
+function getLikedSeries() {
+  const likedSeries = likedSeriesList();
+  const seriesArray = Object.values(likedSeries);
 
-  createMovies(moviesArray, likedMoviesListArticle, { lazyLoad: true, clean: true });
-  
-  console.log(likedMovies)
+  createSeries(seriesArray, likedSeriesListArticle, { lazyLoad: true, clean: true });
 }
