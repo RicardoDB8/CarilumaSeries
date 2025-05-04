@@ -235,3 +235,4 @@ function getLikedSeries() {
 
   createSeries(seriesArray, likedSeriesListArticle, { lazyLoad: true, clean: true });
 }
+// versión nueva
